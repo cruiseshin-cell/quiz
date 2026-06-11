@@ -513,7 +513,6 @@ function goWaiting(){
 
 function startQuiz(){
   if(!questions.length){toast('문제를 먼저 추가하세요!');return;}
-  if(!connected){toast('⚠️ 먼저 연결 설정을 완료하세요!');return;}
   Object.values(participants).forEach(p=>{p.score=0;p.answers={};});
   acounts={}; curQ=-1; phase='running';
   document.getElementById('ws').classList.add('hidden');
@@ -649,6 +648,9 @@ questions=[
 const cfg=loadCfg();
 if(cfg.url&&cfg.key){ sbCh=initSupa(cfg.url,cfg.key); }
 else { setConn(false); }
+// 참가자 접속 감지시 connected 자동 설정
+const _origOnMsg = onMsg;
+function onMsg(ev,data){ connected=true; _origOnMsg(ev,data); }
 renderEditor(); renderParts(); renderScores(); genQR(); goWaiting();
 </script>
 </body>
