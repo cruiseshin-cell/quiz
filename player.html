@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>퀴즈 참여</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f14;--surface:#1a1a24;--surface2:#22222f;--surface3:#2a2a3a;
+  --border:#ffffff14;--border2:#ffffff22;
+  --text:#f0f0f8;--text2:#9090a8;--text3:#5a5a72;
+  --accent:#7c6eff;--accent2:#a394ff;--accent-bg:#7c6eff18;
+  --green:#3ecf8e;--red:#ff5c5c;--yellow:#ffc542;--blue:#4facfe;
+  --r:12px;--rl:18px;--rxl:24px;
+}
+html,body{width:100%;min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--text);font-family:'Pretendard',sans-serif;font-size:16px;overflow:hidden}
+#app{width:100vw;height:100vh;height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;position:relative}
+
+/* screens */
+.screen{width:100%;max-width:480px;display:none;flex-direction:column;align-items:center;gap:20px}
+.screen.on{display:flex}
+
+/* join screen */
+.logo{font-size:32px;font-weight:900;letter-spacing:-.5px;color:var(--text)}
+.logo span{color:var(--accent)}
+.join-card{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:var(--rxl);padding:28px;display:flex;flex-direction:column;gap:14px}
+.join-card h2{font-size:18px;font-weight:800;text-align:center}
+.jinput{width:100%;height:50px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rl);padding:0 16px;color:var(--text);font-size:17px;font-family:inherit;outline:none;text-align:center}
+.jinput:focus{border-color:var(--accent)88}
+.join-btn{width:100%;height:54px;border-radius:var(--rl);border:none;background:var(--accent);color:#fff;font-size:18px;font-weight:800;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.join-btn:hover{opacity:.9}
+.join-btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* waiting screen */
+.wait-room{font-size:48px;font-weight:900;font-family:monospace;letter-spacing:6px;color:var(--accent2)}
+.wait-nick{font-size:20px;font-weight:700}
+.wait-msg{font-size:14px;color:var(--text3);text-align:center}
+.pulse{animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+
+/* question screen */
+.q-header{width:100%;display:flex;align-items:center;justify-content:space-between}
+.q-badge{font-size:12px;font-weight:700;color:var(--accent2);letter-spacing:.5px}
+.timer-pill{padding:4px 14px;border-radius:20px;font-size:15px;font-weight:900;background:var(--surface2);border:1px solid var(--border2);color:var(--text);min-width:52px;text-align:center;transition:color .3s}
+.timer-pill.warn{color:var(--red);border-color:var(--red)66;background:var(--red)11}
+.q-text-card{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:var(--rxl);padding:24px;text-align:center}
+.q-text{font-size:20px;font-weight:800;line-height:1.45;color:var(--text)}
+.opts-wrap{width:100%;display:flex;flex-direction:column;gap:10px}
+.opt-btn{width:100%;min-height:64px;border-radius:var(--rl);border:1px solid;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:12px;padding:0 18px;transition:transform .1s,opacity .2s}
+.opt-btn:active{transform:scale(.97)}
+.opt-btn.disabled{cursor:default;pointer-events:none}
+.opt-btn.correct{animation:correct-pop .4s ease}
+.opt-btn.wrong{animation:wrong-shake .35s ease}
+.opt-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;flex-shrink:0}
+.opt-A{background:#ff5c5c22;border-color:#ff5c5c55;color:#ff8080} .opt-A .opt-icon{background:#ff5c5c33}
+.opt-B{background:#4facfe22;border-color:#4facfe55;color:#7fc5ff} .opt-B .opt-icon{background:#4facfe33}
+.opt-C{background:#ffc54222;border-color:#ffc54255;color:#ffd97a} .opt-C .opt-icon{background:#ffc54233}
+.opt-D{background:#3ecf8e22;border-color:#3ecf8e55;color:#65dca8} .opt-D .opt-icon{background:#3ecf8e33}
+.ox-wrap{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ox-btn{height:130px;border-radius:var(--rxl);border:1px solid;font-size:52px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;transition:transform .1s,opacity .2s}
+.ox-btn:active{transform:scale(.95)}
+.ox-btn.disabled{cursor:default;pointer-events:none}
+.ox-O{background:var(--green)22;border-color:var(--green)55;color:var(--green)}
+.ox-X{background:var(--red)22;border-color:var(--red)55;color:var(--red)}
+
+/* answered screen */
+.answered-icon{font-size:72px;animation:pop .4s ease}
+.answered-msg{font-size:18px;font-weight:700;color:var(--text2);text-align:center}
+.answered-sub{font-size:13px;color:var(--text3);text-align:center}
+.pts-badge{font-size:40px;font-weight:900;color:var(--yellow);animation:pop .4s ease .1s both}
+
+/* result reveal */
+.reveal-card{width:100%;background:var(--surface);border:1px solid;border-radius:var(--rxl);padding:22px;text-align:center}
+.reveal-correct{border-color:var(--green)66;background:var(--green)11}
+.reveal-wrong{border-color:var(--red)66;background:var(--red)11}
+.reveal-label{font-size:13px;font-weight:700;letter-spacing:.5px;margin-bottom:8px}
+.reveal-ans{font-size:20px;font-weight:800}
+.pts-earned{font-size:28px;font-weight:900;color:var(--yellow)}
+
+/* scores screen */
+.my-score-big{font-size:56px;font-weight:900;color:var(--accent2);text-align:center}
+.my-rank{font-size:16px;color:var(--text2);text-align:center}
+.scores-list{width:100%;display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow-y:auto}
+.score-row{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:var(--r);background:var(--surface2);border:1px solid var(--border)}
+.score-rank-num{width:24px;font-size:13px;font-weight:700;color:var(--text3);text-align:center;flex-shrink:0}
+.rank-1n{color:var(--yellow)} .rank-2n{color:var(--text2)} .rank-3n{color:#cd7f32}
+.score-nick-t{flex:1;font-size:14px;font-weight:600}
+.score-pts{font-size:14px;font-weight:800;color:var(--accent2)}
+.score-me{background:var(--accent-bg);border-color:var(--accent)44}
+
+/* conn indicator */
+#conn-dot{position:absolute;top:14px;right:14px;width:8px;height:8px;border-radius:50%;background:var(--text3)}
+#conn-dot.ok{background:var(--green)}
+#conn-dot.err{background:var(--red)}
+
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes correct-pop{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes wrong-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="conn-dot"></div>
+
+  <!-- join -->
+  <div class="screen on" id="s-join">
+    <div class="logo">QUIZ<span>LIVE</span></div>
+    <div class="join-card">
+      <h2>퀴즈 참여하기</h2>
+      <input class="jinput" id="inp-room" placeholder="방 코드" maxlength="6"
+             style="font-family:monospace;text-transform:uppercase;letter-spacing:4px" autocomplete="off"/>
+      <input class="jinput" id="inp-nick" placeholder="닉네임" maxlength="10" autocomplete="off"/>
+      <button class="join-btn" id="btn-join">입장하기</button>
+    </div>
+    <div style="font-size:12px;color:var(--text3);text-align:center">방 코드는 호스트 화면에서 확인하세요</div>
+  </div>
+
+  <!-- waiting -->
+  <div class="screen" id="s-wait">
+    <div class="logo">QUIZ<span>LIVE</span></div>
+    <div class="wait-room" id="w-room">----</div>
+    <div class="wait-nick" id="w-nick"></div>
+    <div class="wait-msg pulse">호스트가 퀴즈를 시작할 때까지 잠시 기다려 주세요...</div>
+  </div>
+
+  <!-- question -->
+  <div class="screen" id="s-question">
+    <div class="q-header">
+      <div class="q-badge" id="q-prog">문제 1 / ?</div>
+      <div class="timer-pill" id="q-timer">--</div>
+    </div>
+    <div class="q-text-card"><div class="q-text" id="q-text">-</div></div>
+    <div id="opts-area" class="opts-wrap"></div>
+  </div>
+
+  <!-- answered (waiting for reveal) -->
+  <div class="screen" id="s-answered">
+    <div class="answered-icon" id="ans-icon">✅</div>
+    <div class="answered-msg" id="ans-msg">답변 완료!</div>
+    <div class="answered-sub">정답을 기다리는 중...</div>
+  </div>
+
+  <!-- reveal -->
+  <div class="screen" id="s-reveal">
+    <div class="reveal-card" id="reveal-card">
+      <div class="reveal-label" id="reveal-label">CORRECT</div>
+      <div class="reveal-ans" id="reveal-ans">-</div>
+    </div>
+    <div class="pts-earned" id="pts-earned">+0점</div>
+    <div style="font-size:14px;color:var(--text2)">누적 점수: <strong id="total-score">0</strong>점</div>
+  </div>
+
+  <!-- final scores -->
+  <div class="screen" id="s-scores">
+    <div style="font-size:20px;font-weight:900;color:var(--yellow)">🏆 최종 결과</div>
+    <div class="my-score-big" id="my-score-big">0점</div>
+    <div class="my-rank" id="my-rank">-위 / -명</div>
+    <div class="scores-list" id="scores-list"></div>
+  </div>
+</div>
+
+<script>
+const OPT_LABELS=['A','B','C','D'];
+const OPT_EMOJI=['🔴','🔵','🟡','🟢'];
+const OPT_CLS=['opt-A','opt-B','opt-C','opt-D'];
+
+// ── params ─────────────────────────────────────────
+const params=new URLSearchParams(location.search);
+const urlRoom=(params.get('room')||'').toUpperCase();
+const urlSbUrl=params.get('sb')||'';
+const urlSbKey=params.get('sk')||'';
+if(urlRoom) document.getElementById('inp-room').value=urlRoom;
+
+// ── state ─────────────────────────────────────────
+let myId=Math.random().toString(36).slice(2,10);
+let myNick='', roomId='';
+let totalScore=0, currentQIdx=-1, currentQ=null;
+let answered=false, answerTime=0, questionStartTime=0;
+let sbChannel=null;
+let questions=[];
+
+// ── supabase ws ──────────────────────────────────
+function getSbCfg(){
+  if(urlSbUrl&&urlSbKey) return {url:urlSbUrl,key:urlSbKey};
+  try{ const s=localStorage.getItem('ql_sb'); if(s) return JSON.parse(s); }catch(e){}
+  return {url:'',key:''};
+}
+
+function initSupa(url,key,rid){
+  const ws_url=url.replace('https://','wss://').replace('http://','ws://')
+    +'/realtime/v1/websocket?apikey='+key+'&vsn=1.0.0';
+  const topic='realtime:quiz-'+rid;
+  let ws, hb, pendQ=[];
+  function raw(p){ if(ws&&ws.readyState===1) ws.send(JSON.stringify(p)); else pendQ.push(p); }
+  function broadcast(ev,data){ raw({topic,event:'broadcast',payload:{ev,data,by:myId},ref:String(Date.now())}); }
+  function join(){ raw({topic,event:'phx_join',payload:{config:{broadcast:{self:false},presence:{key:myId}}},ref:'1'}); }
+  function connect(){
+    ws=new WebSocket(ws_url);
+    ws.onopen=()=>{
+      join(); hb=setInterval(()=>raw({topic:'phoenix',event:'heartbeat',payload:{},ref:'hb'}),25000);
+      pendQ.forEach(p=>ws.send(JSON.stringify(p))); pendQ=[];
+      document.getElementById('conn-dot').className='ok';
+    };
+    ws.onmessage=e=>{ try{ const m=JSON.parse(e.data); if(m.event==='broadcast'&&m.payload?.by!==myId) onMsg(m.payload.ev,m.payload.data,m.payload.by); }catch(ex){} };
+    ws.onclose=()=>{ document.getElementById('conn-dot').className='err'; clearInterval(hb); setTimeout(connect,3000); };
+    ws.onerror=()=>ws.close();
+  }
+  connect();
+  return { broadcast };
+}
+
+function emit(ev,data){ sbChannel?.broadcast(ev,data); }
+
+// ── message handler ──────────────────────────────
+function onMsg(ev,data,by){
+  if(by!=='host'&&ev!=='state') return; // only host events matter
+  if(ev==='state'){
+    if(data.phase==='waiting') showScreen('s-wait');
+    if(data.phase==='running'&&data.questions?.length){ questions=data.questions; }
+  }
+  if(ev==='start'){
+    questions=data.questions||[];
+    totalScore=0; currentQIdx=-1; answered=false;
+    showScreen('s-wait');
+  }
+  if(ev==='question'){
+    currentQIdx=data.qIdx;
+    currentQ=data.q;
+    answered=false;
+    questionStartTime=Date.now();
+    showQuestion(data.q,data.qIdx);
+  }
+  if(ev==='reveal'){
+    handleReveal(data);
+  }
+  if(ev==='results'){
+    showFinalScores(data.scores);
+  }
+  if(ev==='reset'){
+    totalScore=0; currentQIdx=-1; answered=false;
+    Object.keys(myAnswers).forEach(k=>delete myAnswers[k]);
+    showScreen('s-wait');
+  }
+}
+
+// ── screens ───────────────────────────────────────
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+
+let timerInterval=null;
+function showQuestion(q,idx){
+  document.getElementById('q-prog').textContent=`문제 ${idx+1} / ${questions.length||'?'}`;
+  document.getElementById('q-text').textContent=q.text||'(문제 없음)';
+
+  const area=document.getElementById('opts-area');
+  if(q.type==='mc'){
+    area.className='opts-wrap';
+    area.innerHTML=q.opts.map((o,oi)=>`
+      <button class="opt-btn ${OPT_CLS[oi]}" data-ans="${oi}">
+        <div class="opt-icon">${OPT_EMOJI[oi]}</div>
+        <span>${o||'(보기 없음)'}</span>
+      </button>`).join('');
+  } else {
+    area.className='ox-wrap';
+    area.innerHTML=`
+      <button class="ox-btn ox-O" data-ans="O">⭕</button>
+      <button class="ox-btn ox-X" data-ans="X">❌</button>`;
+  }
+  area.querySelectorAll('[data-ans]').forEach(btn=>{
+    btn.addEventListener('click',()=>submitAnswer(btn.dataset.ans, btn));
+  });
+
+  // timer
+  clearInterval(timerInterval);
+  let left=q.timer||20;
+  const pill=document.getElementById('q-timer');
+  pill.textContent=left; pill.className='timer-pill';
+  timerInterval=setInterval(()=>{
+    left--;
+    pill.textContent=left;
+    if(left<=5) pill.className='timer-pill warn';
+    if(left<=0){ clearInterval(timerInterval); if(!answered){ answered=true; showScreen('s-answered'); document.getElementById('ans-icon').textContent='⏰'; document.getElementById('ans-msg').textContent='시간 초과!'; } }
+  },1000);
+
+  showScreen('s-question');
+}
+
+function submitAnswer(ans, btn){
+  if(answered) return;
+  answered=true;
+  clearInterval(timerInterval);
+  const elapsed=(Date.now()-questionStartTime)/1000;
+  const remaining=Math.max(0,(currentQ?.timer||20)-elapsed);
+  emit('answer',{id:myId,qIdx:currentQIdx,answer:ans,time:remaining});
+  // optimistic UI
+  area_disable();
+  document.getElementById('ans-icon').textContent='⏳';
+  document.getElementById('ans-msg').textContent='답변 완료!';
+  showScreen('s-answered');
+}
+
+function area_disable(){
+  document.querySelectorAll('[data-ans]').forEach(b=>{ b.classList.add('disabled'); b.style.opacity='.5'; });
+}
+
+function handleReveal({qIdx,correct}){
+  if(qIdx!==currentQIdx) return;
+  const q=questions[qIdx]; if(!q) return;
+  const myAns=getMyAnswer(qIdx);
+  const isCorrect=myAns!==null&&String(myAns)===String(correct);
+
+  let pts=0;
+  if(isCorrect){
+    const base=q.score||100;
+    const elapsed=(Date.now()-questionStartTime)/1000;
+    const remaining=Math.max(0,q.timer-elapsed);
+    const bonus=Math.round((remaining/q.timer)*50);
+    pts=base+bonus;
+    totalScore+=pts;
+  }
+
+  const card=document.getElementById('reveal-card');
+  const ansText=q.type==='mc'?q.opts[+correct]||correct:correct==='O'?'⭕ O':'❌ X';
+
+  if(isCorrect){
+    card.className='reveal-card reveal-correct';
+    document.getElementById('reveal-label').textContent='✅ 정답!';
+    document.getElementById('reveal-label').style.color='var(--green)';
+  } else {
+    card.className='reveal-card reveal-wrong';
+    document.getElementById('reveal-label').textContent=myAns===null?'⏰ 시간 초과':'❌ 오답';
+    document.getElementById('reveal-label').style.color='var(--red)';
+  }
+  document.getElementById('reveal-ans').textContent='정답: '+ansText;
+  document.getElementById('pts-earned').textContent=(pts>0?'+':'')+pts+'점';
+  document.getElementById('pts-earned').style.color=pts>0?'var(--yellow)':'var(--text3)';
+  document.getElementById('total-score').textContent=totalScore;
+  showScreen('s-reveal');
+}
+
+// my answer tracking
+const myAnswers={};
+function getMyAnswer(idx){ return myAnswers[idx]!==undefined?myAnswers[idx]:null; }
+// override emit to also save locally
+const _origEmit=emit;
+function emit(ev,data){
+  if(ev==='answer') myAnswers[data.qIdx]=data.answer;
+  sbChannel?.broadcast(ev,data);
+}
+
+function showFinalScores(scores){
+  const myRank=(scores||[]).findIndex(s=>s.nick===myNick)+1;
+  document.getElementById('my-score-big').textContent=totalScore+'점';
+  document.getElementById('my-rank').textContent=`${myRank}위 / ${(scores||[]).length}명`;
+  const max=(scores||[])[0]?.score||1;
+  document.getElementById('scores-list').innerHTML=(scores||[]).map((s,i)=>`
+    <div class="score-row${s.nick===myNick?' score-me':''}">
+      <div class="score-rank-num ${i===0?'rank-1n':i===1?'rank-2n':i===2?'rank-3n':''}">${i+1}</div>
+      <div class="score-nick-t">${s.nick}${s.nick===myNick?' 👈':''}</div>
+      <div class="score-pts">${s.score}점</div>
+    </div>`).join('');
+  showScreen('s-scores');
+}
+
+// ── join ─────────────────────────────────────────
+document.getElementById('btn-join').addEventListener('click',join);
+['inp-room','inp-nick'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{ if(e.key==='Enter') join(); }));
+document.getElementById('inp-room').addEventListener('input',e=>{ e.target.value=e.target.value.toUpperCase(); });
+
+function join(){
+  const room=document.getElementById('inp-room').value.trim().toUpperCase();
+  const nick=document.getElementById('inp-nick').value.trim();
+  if(!room){alert('방 코드를 입력하세요');return;}
+  if(!nick){alert('닉네임을 입력하세요');return;}
+  roomId=room; myNick=nick;
+  document.getElementById('w-room').textContent=room;
+  document.getElementById('w-nick').textContent=nick+' 님';
+  const cfg=getSbCfg();
+  if(cfg.url&&cfg.key){
+    sbChannel=initSupa(cfg.url,cfg.key,room);
+    setTimeout(()=>{ emit('join',{id:myId,nick}); },700);
+  } else {
+    document.getElementById('conn-dot').className='err';
+  }
+  showScreen('s-wait');
+}
+
+// auto-join if URL params filled
+if(urlRoom&&urlSbUrl){
+  const savedNick=sessionStorage.getItem('ql_nick');
+  if(savedNick){ document.getElementById('inp-nick').value=savedNick; }
+}
+document.getElementById('inp-nick').addEventListener('input',e=>sessionStorage.setItem('ql_nick',e.target.value));
+</script>
+</body>
+</html>
